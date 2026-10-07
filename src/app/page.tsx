@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { MemoryItem, MemoryPagination, UserItem } from "@/types/neocore";
 import { Header } from "@/components/Header";
 import { StatsCards } from "@/components/StatsCards";
+import { WordCloud } from "@/components/WordCloud";
 import { FilterToolbar } from "@/components/FilterToolbar";
 import { MemoryCard } from "@/components/MemoryCard";
 import { MemoryDetail } from "@/components/MemoryDetail";
@@ -154,8 +155,21 @@ export default function DashboardPage() {
       const matchParticipants = mem.participants?.some((p) => p.toLowerCase().includes(q));
       const matchEntities = mem.mentioned_entities?.some((e) => e.toLowerCase().includes(q));
       const matchTags = mem.tags?.some((t) => t.toLowerCase().includes(q));
+      const matchProducts = mem.product?.some((pr) =>
+        (typeof pr === "string" ? pr : JSON.stringify(pr)).toLowerCase().includes(q)
+      );
+      const matchCompetitors = mem.competitors_mentioned?.some((c) => c.toLowerCase().includes(q));
 
-      return matchTitle || matchSummary || matchMom || matchParticipants || matchEntities || matchTags;
+      return (
+        matchTitle ||
+        matchSummary ||
+        matchMom ||
+        matchParticipants ||
+        matchEntities ||
+        matchTags ||
+        matchProducts ||
+        matchCompetitors
+      );
     });
   }, [memories, selectedDomain, searchQuery]);
 
@@ -182,6 +196,13 @@ export default function DashboardPage() {
           avgDurationSeconds={stats?.avgDurationSeconds || 0}
           activeDomain={selectedDomain}
           onSelectDomain={setSelectedDomain}
+        />
+
+        {/* Interactive Word Cloud Intelligence */}
+        <WordCloud
+          selectedWord={searchQuery}
+          onSelectWord={(word) => setSearchQuery(word)}
+          onClearWord={() => setSearchQuery("")}
         />
 
         {/* Search & Filter Strip */}
