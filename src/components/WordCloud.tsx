@@ -78,7 +78,7 @@ function getWordColor(word: string): string {
   return PALETTE[index];
 }
 
-// Renders an organic graphical word cloud packed via d3-cloud
+// Renders an organic graphical word cloud packed via d3-cloud with flicker-free hover
 export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloudProps) {
   const [data, setData] = useState<WordCloudData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,7 +86,6 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
   const [isExpanded, setIsExpanded] = useState(true);
   const [layoutWords, setLayoutWords] = useState<PlacedWord[]>([]);
   const [hoveredWord, setHoveredWord] = useState<PlacedWord | null>(null);
-  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const width = 860;
@@ -142,10 +141,10 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
     const minCount = Math.min(...counts);
     const maxCount = Math.max(...counts);
 
-    // Scaling font sizes from 13px up to 52px
+    // Scaling font sizes from 13px up to 50px
     const fontScale = scaleSqrt()
       .domain([minCount, maxCount])
-      .range([13, 52]);
+      .range([13, 50]);
 
     const wordsToLayout = rawList.map((item) => ({
       text: item.text,
@@ -157,7 +156,7 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
     const layout = cloud<PlacedWord>()
       .size([width, height])
       .words(wordsToLayout as any)
-      .padding(3)
+      .padding(4)
       .rotate(() => 0)
       .font("-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif")
       .fontSize((d) => d.size || 14)
@@ -168,17 +167,16 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
     layout.start();
   }, [rawList, width, height]);
 
-  // Handles mouse movement over SVG for tooltip tracking
-  const handleMouseMove = (e: React.MouseEvent, word: PlacedWord) => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setTooltipPos({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top - 12,
-      });
-      setHoveredWord(word);
-    }
-  };
+  // Stable percentage coordinates for pinned tooltip
+  const tooltipCoords = useMemo(() => {
+    if (!hoveredWord) return null;
+    const xPct = ((hoveredWord.x + width / 2) / width) * 100;
+    const yPct = ((hoveredWord.y + height / 2) / height) * 100;
+    return {
+      left: `${xPct}%`,
+      top: `${yPct}%`,
+    };
+  }, [hoveredWord, width, height]);
 
   return (
     <div
@@ -215,7 +213,10 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
           {/* Category Tabs */}
           <div className="flex items-center gap-0.5 bg-slate-100/80 border border-slate-200 rounded-lg p-0.5 text-xs">
             <button
-              onClick={() => setMode("all")}
+              onClick={() => {
+                setMode("all");
+                setHoveredWord(null);
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 ${
                 mode === "all"
                   ? "bg-white text-blue-700 shadow-2xs font-semibold"
@@ -228,7 +229,10 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
             </button>
 
             <button
-              onClick={() => setMode("entities")}
+              onClick={() => {
+                setMode("entities");
+                setHoveredWord(null);
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 ${
                 mode === "entities"
                   ? "bg-white text-indigo-700 shadow-2xs font-semibold"
@@ -241,7 +245,10 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
             </button>
 
             <button
-              onClick={() => setMode("tags")}
+              onClick={() => {
+                setMode("tags");
+                setHoveredWord(null);
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 ${
                 mode === "tags"
                   ? "bg-white text-emerald-700 shadow-2xs font-semibold"
@@ -254,7 +261,10 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
             </button>
 
             <button
-              onClick={() => setMode("keywords")}
+              onClick={() => {
+                setMode("keywords");
+                setHoveredWord(null);
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 ${
                 mode === "keywords"
                   ? "bg-white text-sky-700 shadow-2xs font-semibold"
@@ -267,7 +277,10 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
             </button>
 
             <button
-              onClick={() => setMode("products")}
+              onClick={() => {
+                setMode("products");
+                setHoveredWord(null);
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 ${
                 mode === "products"
                   ? "bg-white text-purple-700 shadow-2xs font-semibold"
@@ -280,7 +293,10 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
             </button>
 
             <button
-              onClick={() => setMode("competitors")}
+              onClick={() => {
+                setMode("competitors");
+                setHoveredWord(null);
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 ${
                 mode === "competitors"
                   ? "bg-white text-amber-700 shadow-2xs font-semibold"
@@ -305,7 +321,7 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
 
       {/* Cloud Visual Body */}
       {isExpanded && (
-        <div className="pt-2 flex flex-col items-center justify-center">
+        <div className="pt-2 flex flex-col items-center justify-center relative">
           {isLoading ? (
             <div className="w-full h-80 flex items-center justify-center">
               <div className="text-center space-y-2">
@@ -322,7 +338,6 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
               <svg
                 viewBox={`0 0 ${width} ${height}`}
                 className="w-full h-auto max-h-[420px] select-none"
-                style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.02))" }}
               >
                 <g transform={`translate(${width / 2}, ${height / 2})`}>
                   {layoutWords.map((word, idx) => {
@@ -338,16 +353,15 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
                         style={{
                           fontSize: `${word.size}px`,
                           fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
-                          fontWeight: word.size > 28 ? "700" : word.size > 18 ? "600" : "500",
-                          fill: isSelected ? "#2563eb" : wordColor,
+                          fontWeight: isHovered || isSelected ? "800" : word.size > 28 ? "700" : word.size > 18 ? "600" : "500",
+                          fill: isSelected ? "#2563eb" : isHovered ? "#1e40af" : wordColor,
                           cursor: "pointer",
-                          transition: "all 0.18s cubic-bezier(0.4, 0, 0.2, 1)",
-                          opacity: hoveredWord && !isHovered && !isSelected ? 0.45 : 1,
+                          userSelect: "none",
                           textDecoration: isSelected ? "underline" : "none",
+                          filter: isHovered ? "drop-shadow(0 2px 4px rgba(37,99,235,0.25))" : "none",
                         }}
-                        onMouseEnter={(e) => handleMouseMove(e, word)}
-                        onMouseMove={(e) => handleMouseMove(e, word)}
-                        onMouseLeave={() => setHoveredWord(null)}
+                        onMouseEnter={() => setHoveredWord(word)}
+                        onMouseLeave={() => setHoveredWord((prev) => (prev?.text === word.text ? null : prev))}
                         onClick={() => {
                           if (isSelected) {
                             onClearWord();
@@ -355,7 +369,6 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
                             onSelectWord(word.text);
                           }
                         }}
-                        className="hover:scale-110 origin-center"
                       >
                         {word.text}
                       </text>
@@ -364,7 +377,34 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
                 </g>
               </svg>
 
-              {/* Graphic Cloud Subtitle (Matching visual summary style) */}
+              {/* Pinned Stable Tooltip (Zero flicker) */}
+              {hoveredWord && tooltipCoords && (
+                <div
+                  className="pointer-events-none absolute z-30 px-3 py-1.5 bg-slate-900 text-white rounded-lg shadow-xl text-xs space-y-0.5 border border-slate-700/80 transition-all duration-150 ease-out"
+                  style={{
+                    left: tooltipCoords.left,
+                    top: tooltipCoords.top,
+                    transform: "translate(-50%, -100%) translateY(-14px)",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-white">&quot;{hoveredWord.text}&quot;</span>
+                    {hoveredWord.category && (
+                      <span className="text-[9px] font-mono px-1 rounded bg-slate-800 text-blue-300 border border-slate-700">
+                        {hoveredWord.category}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-300">
+                    {hoveredWord.count} mention{hoveredWord.count > 1 ? "s" : ""} across conversations
+                  </div>
+                  <div className="text-[9px] text-blue-400 font-medium">
+                    Click to filter conversation feed
+                  </div>
+                </div>
+              )}
+
+              {/* Graphic Cloud Subtitle */}
               <div className="mt-1 text-center border-t border-slate-100 pt-2 w-full">
                 <div className="text-[11px] font-bold tracking-wider text-slate-600 uppercase">
                   Conversation Intelligence Summary
@@ -375,32 +415,6 @@ export function WordCloud({ selectedWord, onSelectWord, onClearWord }: WordCloud
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Floating Interactive Tooltip */}
-      {hoveredWord && isExpanded && (
-        <div
-          className="pointer-events-none absolute z-30 transform -translate-x-1/2 -translate-y-full px-2.5 py-1.5 bg-slate-900 text-white rounded-lg shadow-xl text-xs space-y-0.5 transition-opacity"
-          style={{
-            left: `${tooltipPos.x}px`,
-            top: `${tooltipPos.y}px`,
-          }}
-        >
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-white">&quot;{hoveredWord.text}&quot;</span>
-            {hoveredWord.category && (
-              <span className="text-[9px] font-mono px-1 rounded bg-slate-800 text-blue-300">
-                {hoveredWord.category}
-              </span>
-            )}
-          </div>
-          <div className="text-[10px] text-slate-300">
-            {hoveredWord.count} mention{hoveredWord.count > 1 ? "s" : ""} across conversations
-          </div>
-          <div className="text-[9px] text-blue-400 font-medium">
-            Click to filter conversation feed
-          </div>
         </div>
       )}
     </div>
