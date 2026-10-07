@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { getOrgMemories, getOrganizationUsers, getBusinessId } from "@/lib/neocore-client";
 
+export const dynamic = "force-dynamic";
+
 // Calculates aggregate metrics for the dashboard header
 export async function GET() {
   try {

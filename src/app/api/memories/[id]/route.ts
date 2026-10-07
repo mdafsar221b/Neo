@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMemoryById } from "@/lib/neocore-client";
 
+export const dynamic = "force-dynamic";
+
 // Handles GET requests for single memory lookup
 export async function GET(
   _request: NextRequest,

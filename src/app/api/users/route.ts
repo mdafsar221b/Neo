@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { getOrganizationUsers } from "@/lib/neocore-client";
 
+export const dynamic = "force-dynamic";
+
 // Handles GET requests for user roster
 export async function GET() {
   try {

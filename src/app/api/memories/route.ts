@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrgMemories } from "@/lib/neocore-client";
 import { MemoryQueryFilters } from "@/types/neocore";
 
+export const dynamic = "force-dynamic";
+
 // Handles GET requests for memory feed
 export async function GET(request: NextRequest) {
   try {
